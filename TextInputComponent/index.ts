@@ -4,6 +4,7 @@ export class TextInputComponent implements ComponentFramework.StandardControl<II
 
     private _element: HTMLInputElement;
     private _container: HTMLDivElement;
+    private _clearButton: HTMLButtonElement;
     private _value: string;
     private _notifyOutputChanged: () => void;
 
@@ -13,6 +14,7 @@ export class TextInputComponent implements ComponentFramework.StandardControl<II
 
     public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container: HTMLDivElement): void {
         this._container = container;
+        context.mode.trackContainerResize(true);
         this._container.classList.add("my-custom-input-container");
 
         this._element = document.createElement("INPUT") as HTMLInputElement;
@@ -20,16 +22,29 @@ export class TextInputComponent implements ComponentFramework.StandardControl<II
         this._element.value = context.parameters.enteredText.raw || "";
         this._notifyOutputChanged = notifyOutputChanged;
 
+        // Create the clear button
+        this._clearButton = document.createElement("button");
+        this._clearButton.type = "button";
+        this._clearButton.innerHTML = "&#x2715;";  // Unicode for the 'X' symbol
+        this._clearButton.classList.add("clear-button");
+
         // Inject CSS styles
         this.injectCSS();
 
         // Set initial dimensions
         this.setElementDimensions(context);
 
-        // Add event listener for Enter key press
+        // Add event listeners
         this._element.addEventListener("keydown", this.onKeyDown.bind(this));
+        this._element.addEventListener("input", this.onInputChange.bind(this));
+        this._clearButton.addEventListener("click", this.clearInput.bind(this));
 
-        container.appendChild(this._element);
+        // Append elements to the container
+        this._container.appendChild(this._element);
+        this._container.appendChild(this._clearButton);
+
+        // Show or hide the clear button based on initial value
+        this.updateClearButtonVisibility();
     }
 
     private injectCSS(): void {
@@ -37,39 +52,41 @@ export class TextInputComponent implements ComponentFramework.StandardControl<II
         style.innerHTML = `
             .my-custom-input-container {
                 display: flex;
+                position: relative;
                 width: 100%;
                 height: 100%;
             }
 
             .my-custom-input-container input[type=text], .my-custom-input-container select {
                 flex: 1;
-                padding: 12px 10px;  /* Adjusted left padding to 10px */
+                padding: 12px 10px;
+                padding-right: 30px;  /* Adjusted right padding to accommodate clear button */
                 margin: 8px 0;
                 border: 1px solid #ccc;
                 border-radius: 4px;
                 box-sizing: border-box;
-                height: 100%;  /* Ensure the input box fills the height of the container */
+                height: 100%;
             }
 
-            .my-custom-input-container input[type=submit] {
-                width: 100%;
-                background-color: #4CAF50;
-                color: white;
-                padding: 14px 20px;
-                margin: 8px 0;
+            .clear-button {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
                 border: none;
-                border-radius: 4px;
                 cursor: pointer;
+                font-size: 16px;
+                color: #aaa;
+                display: none;  /* Initially hidden */
             }
 
-            .my-custom-input-container input[type=submit]:hover {
-                background-color: #45a049;
+            .clear-button:hover {
+                color: #000;
             }
 
-            .my-custom-input-container div {
-                border-radius: 5px;
-                background-color: #f2f2f2;
-                padding: 20px;
+            .my-custom-input-container input[type=text]:not(:placeholder-shown) + .clear-button {
+                display: block;  /* Show the button when there is text */
             }
         `;
         document.head.appendChild(style);
@@ -82,12 +99,32 @@ export class TextInputComponent implements ComponentFramework.StandardControl<II
         }
     }
 
+    private onInputChange(): void {
+        this.updateClearButtonVisibility();
+        this._value = this._element.value;
+        this._notifyOutputChanged();
+    }
+
+    private clearInput(): void {
+        this._element.value = "";
+        this._value = "";
+        this._notifyOutputChanged();
+        this.updateClearButtonVisibility();
+    }
+
+    private updateClearButtonVisibility(): void {
+        this._clearButton.style.display = this._element.value ? "block" : "none";
+    }
+
     public updateView(context: ComponentFramework.Context<IInputs>): void {
         // Update the control view if necessary
         if (context.parameters.enteredText.raw !== this._value) {
             this._value = context.parameters.enteredText.raw || "";
             this._element.value = this._value;
         }
+
+        // Show or hide the clear button based on input value
+        this.updateClearButtonVisibility();
 
         // Update dimensions
         this.setElementDimensions(context);
@@ -107,5 +144,7 @@ export class TextInputComponent implements ComponentFramework.StandardControl<II
     public destroy(): void {
         // Cleanup if necessary
         this._element.removeEventListener("keydown", this.onKeyDown.bind(this));
+        this._element.removeEventListener("input", this.onInputChange.bind(this));
+        this._clearButton.removeEventListener("click", this.clearInput.bind(this));
     }
 }
