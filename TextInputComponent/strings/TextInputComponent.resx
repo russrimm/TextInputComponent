@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="InputWidth_Display_Key" xml:space="preserve">
+    <value>Input Width</value>
+  </data>
+  <data name="InputWidth_Desc_Key" xml:space="preserve">
+    <value>Width of the input box in pixels</value>
+  </data>
+  <data name="InputHeight_Display_Key" xml:space="preserve">
+    <value>Input Height</value>
+  </data>
+  <data name="InputHeight_Desc_Key" xml:space="preserve">
+    <value>Height of the input box in pixels</value>
+  </data>
+  <data name="Property_Display_Key" xml:space="preserve">
+    <value>Entered Text</value>
+  </data>
+  <data name="Property_Desc_Key" xml:space="preserve">
+    <value>Text entered in the input box</value>
+  </data>
+</root>
